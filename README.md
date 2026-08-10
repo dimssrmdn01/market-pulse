@@ -3,7 +3,7 @@
 </div>
 
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0F2E1D,100:B9975B&height=150&section=header&text=Market%20Pulse&fontSize=38&fontColor=F3EEDF&fontAlignY=38&desc=Economic%20%26%20Financial%20Markets%20Dashboard&descAlignY=58&descSize=16" alt="Banner" width="100%">
+  <img src="assets/banner.svg" alt="Market Pulse Banner" width="100%">
 </div>
 
 <div align="center">
@@ -57,6 +57,8 @@ Powered by Llama-3.1 via Groq. Paste any FOMC statement or Fed speech excerpt to
 ````text
 market-pulse/
 ├── app.py                   # Main Streamlit entry point
+├── assets/
+│   └── banner.svg            # Self-hosted animated header banner
 ├── modules/
 │   ├── data.py              # Market snapshot, calendars, FRED, backtest, correlation
 │   ├── news.py              # Finnhub news fetch + topic tagging
