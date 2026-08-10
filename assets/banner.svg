@@ -1,1 +1,73 @@
+<svg width="900" height="180" viewBox="0 0 900 180" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F2E1D"/>
+      <stop offset="100%" stop-color="#1B4A2E"/>
+    </linearGradient>
+    <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#B9975B" stop-opacity="0.35"/>
+      <stop offset="50%" stop-color="#B9975B"/>
+      <stop offset="100%" stop-color="#F3EEDF"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#B9975B" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#B9975B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
 
+  <!-- Background -->
+  <rect width="900" height="180" fill="url(#bgGrad)"/>
+
+  <!-- Ledger hairlines, subtle parchment texture -->
+  <line x1="0" y1="40" x2="900" y2="40" stroke="#F3EEDF" stroke-opacity="0.05"/>
+  <line x1="0" y1="180" x2="900" y2="180" stroke="#F3EEDF" stroke-opacity="0.05"/>
+
+  <!-- Gold glow behind live badge -->
+  <circle cx="820" cy="42" r="55" fill="url(#glow)"/>
+
+  <!-- Title -->
+  <text x="50" y="76" font-family="Georgia, 'Times New Roman', serif" font-size="44" font-weight="700"
+        fill="#F3EEDF" opacity="0">
+    Market Pulse
+    <animate attributeName="opacity" from="0" to="1" dur="1s" begin="0.2s" fill="freeze"/>
+  </text>
+
+  <!-- Gold underline seal -->
+  <rect x="52" y="88" width="0" height="3" fill="#B9975B">
+    <animate attributeName="width" from="0" to="220" dur="0.8s" begin="1.1s" fill="freeze"/>
+  </rect>
+
+  <!-- Subtitle -->
+  <text x="52" y="112" font-family="'Courier New', monospace" font-size="13.5" letter-spacing="2.5"
+        fill="#B9975B" opacity="0">
+    CRYPTO · FOREX · STOCKS · AI SENTIMENT
+    <animate attributeName="opacity" from="0" to="1" dur="1s" begin="1.4s" fill="freeze"/>
+  </text>
+
+  <!-- LIVE badge -->
+  <g opacity="0">
+    <animate attributeName="opacity" from="0" to="1" dur="0.8s" begin="1.9s" fill="freeze"/>
+    <rect x="778" y="26" width="84" height="26" rx="13" fill="none" stroke="#B9975B" stroke-width="1.2"/>
+    <circle cx="795" cy="39" r="4" fill="#F3EEDF">
+      <animate attributeName="opacity" values="1;0.25;1" dur="1.6s" begin="2.2s" repeatCount="indefinite"/>
+    </circle>
+    <text x="808" y="43" font-family="'Courier New', monospace" font-size="12" font-weight="700"
+          letter-spacing="1.5" fill="#F3EEDF">LIVE</text>
+  </g>
+
+  <!-- Pulse waveform (ECG-style), draws in then shimmers -->
+  <path id="pulseLine"
+        d="M0,150 L60,150 L80,150 L95,120 L110,175 L125,150 L300,150 L320,150 L335,112 L350,178 L365,150 L560,150 L580,150 L595,108 L610,178 L625,150 L900,150"
+        fill="none" stroke="url(#lineGrad)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+        stroke-dasharray="1300" stroke-dashoffset="1300">
+    <animate attributeName="stroke-dashoffset" from="1300" to="0" dur="2.2s" begin="0.3s" fill="freeze"/>
+  </path>
+
+  <!-- Traveling shimmer highlight along the same waveform -->
+  <path d="M0,150 L60,150 L80,150 L95,120 L110,175 L125,150 L300,150 L320,150 L335,112 L350,178 L365,150 L560,150 L580,150 L595,108 L610,178 L625,150 L900,150"
+        fill="none" stroke="#F3EEDF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+        stroke-dasharray="40 1300" stroke-dashoffset="0" opacity="0">
+    <animate attributeName="opacity" from="0" to="0.9" dur="0.4s" begin="2.5s" fill="freeze"/>
+    <animate attributeName="stroke-dashoffset" from="0" to="-1340" dur="3.5s" begin="2.5s" repeatCount="indefinite"/>
+  </path>
+</svg>
