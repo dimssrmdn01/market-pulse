@@ -93,14 +93,14 @@ with st.sidebar:
         st.caption("✓ Finnhub API Key dimuat otomatis..." if lang == 'ID' else "✓ Finnhub API Key loaded automatically...")
     else:
         finnhub_api_key = st.text_input("Finnhub API Key", type="password", placeholder="c...")
-        st.caption("Dapatkan gratis di [finnhub.io/register](https://finnhub.io/register) — untuk tab Ringkasan Pasar." if lang == 'ID' else "Get it for free at [finnhub.io/register](https://finnhub.io/register) — for the Market Overview tab.")
+        st.caption("Dapatkan gratis di [finnhub.io/register](https://finnhub.io/register)untuk tab Ringkasan Pasar." if lang == 'ID' else "Get it for free at [finnhub.io/register](https://finnhub.io/register) — for the Market Overview tab.")
 
     if saved_groq_key:
         groq_api_key = saved_groq_key
         st.caption("✓ Groq API Key dimuat otomatis..." if lang == 'ID' else "✓ Groq API Key loaded automatically...")
     else:
         groq_api_key = st.text_input("Groq API Key", type="password", placeholder="gsk_...")
-        st.caption("Dapatkan gratis di [console.groq.com](https://console.groq.com/keys) — untuk analisis sentimen AI." if lang == 'ID' else "Get it for free at [console.groq.com](https://console.groq.com/keys) — for AI sentiment analysis.")
+        st.caption("Dapatkan gratis di [console.groq.com](https://console.groq.com/keys) untuk analisis sentimen AI." if lang == 'ID' else "Get it for free at [console.groq.com](https://console.groq.com/keys) — for AI sentiment analysis.")
 
     st.markdown('<hr class="divider-line">', unsafe_allow_html=True)
     st.markdown(
@@ -109,14 +109,30 @@ with st.sidebar:
        unsafe_allow_html=True,
     )
 
-    available_options = list(data.AVAILABLE_ASSETS.keys())
-    default_options = ["BTC/USD", "Emas (Gold)", "EUR/USD", "S&P 500"]
-    selected_assets = st.multiselect(
-        "Pilih aset yang ingin dipantau:" if lang == 'ID' else "Select assets to monitor:",
-        options=available_options,
-        default=default_options,
-        label_visibility="collapsed"
-    )
+    grouped_assets = data.get_assets_grouped()
+    default_by_category = {
+        "crypto": ["BTC/USD", "ETH/USD"],
+        "forex": ["EUR/USD", "USD/IDR"],
+        "commodity": ["Emas (Gold)"],
+        "stock": ["S&P 500"],
+        "idx_stock": ["IHSG (JKSE)", "BCA (BBCA)"],
+    }
+
+    selected_assets = []
+    for cat in data.CATEGORY_ORDER:
+        labels_in_cat = grouped_assets.get(cat, [])
+        if not labels_in_cat:
+            continue
+        cat_label = data.CATEGORY_LABELS[cat][lang]
+        with st.expander(cat_label, expanded=(cat in ("crypto", "forex"))):
+            picked = st.multiselect(
+                cat_label,
+                options=labels_in_cat,
+                default=[d for d in default_by_category.get(cat, []) if d in labels_in_cat],
+                label_visibility="collapsed",
+                key=f"watchlist_{cat}",
+            )
+            selected_assets.extend(picked)
 
 # -------------------------------------------------------------------------
 # HERO
@@ -134,19 +150,35 @@ with st.spinner("Mengambil harga terkini..." if lang == 'ID' else "Fetching live
     snapshot = data.fetch_market_snapshot(selected_assets)
 
 if snapshot:
-    ticker_html = "".join(
-        f"""
+    from collections import defaultdict
+    grouped_snapshot = defaultdict(list)
+    for a in snapshot:
+        grouped_snapshot[a["category"]].append(a)
+
+    for cat in data.CATEGORY_ORDER:
+        items = grouped_snapshot.get(cat)
+        if not items:
+            continue
+        cat_label = data.CATEGORY_LABELS[cat][lang]
+        st.markdown(
+            f"<p style='font-family:IBM Plex Mono,monospace; font-size:0.68rem; "
+            f"text-transform:uppercase; letter-spacing:0.06em; color:#7A7360; "
+            f"margin:0.6rem 0 0.2rem;'>{cat_label}</p>",
+            unsafe_allow_html=True,
+        )
+        ticker_html = "".join(
+            f"""
 <div class="ticker-item">
     <div class="ticker-symbol">{a['label']}</div>
     <div class="ticker-price">{data.format_price(a['price'], a['category'])}</div>
     <div class="ticker-change {'up' if a['change_pct'] >= 0 else 'down'}">{'+' if a['change_pct'] >= 0 else ''}{a['change_pct']:.2f}%</div>
 </div>
 """
-        for a in snapshot
-    )
-    st.markdown(f'<div class="ticker-strip">{ticker_html}</div>', unsafe_allow_html=True)
+            for a in items
+        )
+        st.markdown(f'<div class="ticker-strip">{ticker_html}</div>', unsafe_allow_html=True)
 else:
-    st.caption("⚠ Data harga live tidak tersedia saat ini — coba muat ulang halaman." if lang == 'ID' else "⚠ Live price data currently unavailable — try reloading the page.")
+    st.caption("⚠ Data harga live tidak tersedia saat ini - coba muat ulang halaman." if lang == 'ID' else "⚠ Live price data currently unavailable - try reloading the page.")
 
 hero_col1, hero_col2 = st.columns([2, 1])
 with hero_col1:
@@ -418,7 +450,7 @@ with tab_central:
 
     st.markdown("#### Fed Wire &middot; Rilis Resmi federalreserve.gov" if lang == 'ID' else "#### Fed Wire &middot; Official Releases federalreserve.gov")
     st.caption(
-        "Feed RSS resmi rilis pers Federal Reserve. Tag Hawkish/Dovish di sini murni hitungan kata kunci sederhana pada judul — bukan model NLP atau analisis mendalam. Untuk penilaian AI yang sesungguhnya atas teks statement, pakai tab 'Analisis Statement'."
+        "Feed RSS resmi rilis pers Federal Reserve. Tag Hawkish/Dovish di sini murni hitungan kata kunci sederhana pada judul, bukan model NLP atau analisis mendalam. Untuk penilaian AI yang sesungguhnya atas teks statement, pakai tab 'Analisis Statement'."
         if lang == 'ID' else
         "Official RSS feed for Federal Reserve press releases. Hawkish/Dovish tags here are purely basic keyword counts on titles — not an NLP model or deep analysis. For true AI assessment, use the 'Statement Analysis' tab."
     )
