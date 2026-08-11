@@ -1,19 +1,3 @@
-"""
-news.py
-Fetches economic & financial market news via the Finnhub API.
-
-Free tier: https://finnhub.io/register (no credit card required).
-Endpoint docs: https://finnhub.io/docs/api/market-news
-
-Finnhub's /news endpoint takes a `category` param with a fixed set of
-values: "general", "forex", "crypto", "merger". We pull all three relevant
-categories directly and merge them, tagging each article with the category
-it actually came from (plus a light keyword pass for finer-grained tags
-like Bank Sentral / Makro Ekonomi within the general feed). Per-category fetch
-failures are collected as diagnostics rather than silently swallowed, so
-the UI can explain *why* a filter came up empty instead of showing nothing.
-"""
-
 from __future__ import annotations
 
 import datetime as dt
@@ -23,16 +7,11 @@ import requests
 import streamlit as st
 
 FINNHUB_NEWS_URL = "https://finnhub.io/api/v1/news"
-
-# Categories fetched directly from Finnhub (these are the only values its
-# API accepts for general market news, aside from "merger").
 FINNHUB_CATEGORIES = {
     "general": "Umum",
     "forex": "Forex",
     "crypto": "Kripto",
 }
-
-# --- UPGRADE: Extra keyword-based tagging untuk Makroekonomi & CPI/PPI ---
 CATEGORY_KEYWORDS = {
     "Bank Sentral": [
         "fed", "fomc", "federal reserve", "powell", "ecb", "bank of england",
@@ -65,8 +44,8 @@ class NewsItem:
 @dataclass
 class FetchDiagnostics:
     """Per-category fetch results, so the UI can explain empty filters."""
-    counts: dict = field(default_factory=dict)   # e.g. {"general": 25, "forex": 0}
-    errors: dict = field(default_factory=dict)   # e.g. {"forex": "403 Client Error..."}
+    counts: dict = field(default_factory=dict)  
+    errors: dict = field(default_factory=dict)  
 
 
 def _keyword_tags(headline: str, summary: str) -> list[str]:
@@ -94,7 +73,7 @@ def _fetch_one_category(finnhub_category: str, base_tag: str, api_key: str, limi
             if not headline:
                 continue
             tags = [base_tag] + _keyword_tags(headline, summary)
-            tags = list(dict.fromkeys(tags))  # de-dupe, keep order
+            tags = list(dict.fromkeys(tags))  
             items.append(
                 NewsItem(
                     headline=headline,
@@ -112,14 +91,6 @@ def _fetch_one_category(finnhub_category: str, base_tag: str, api_key: str, limi
 
 @st.cache_data(ttl=600) 
 def fetch_market_news(api_key: str, limit_per_category: int = 25) -> tuple[list[NewsItem], FetchDiagnostics]:
-    """
-    Fetch recent market news from Finnhub across general, forex, and crypto
-    categories, merge and de-duplicate by URL, sort newest first.
-
-    Returns (items, diagnostics). Raises ValueError only if EVERY category
-    fails or the key is missing, so the UI layer can crash-guard the totally
-    broken case while still surfacing partial failures via diagnostics.
-    """
     if not api_key:
         raise ValueError("Finnhub API key belum diisi. Masukkan di sidebar terlebih dahulu.")
 
@@ -139,7 +110,6 @@ def fetch_market_news(api_key: str, limit_per_category: int = 25) -> tuple[list[
         detail = "; ".join(f"{k}: {v}" for k, v in diag.errors.items())
         raise ValueError(f"Finnhub tidak mengembalikan data berita sama sekali. Detail: {detail or 'tidak diketahui'}")
 
-    # De-dupe by URL (Finnhub occasionally repeats an article across feeds).
     seen = set()
     deduped = []
     for item in all_items:
