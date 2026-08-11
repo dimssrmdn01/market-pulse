@@ -50,21 +50,75 @@ FALLBACK_RATE_HISTORY = pd.DataFrame(
 
 CURRENT_TARGET_RANGE = (3.50, 3.75)  
 
-#Multi-asset ticker strip: crypto, forex majors 
-AVAILABLE_ASSETS = {
-    "BTC/USD": {"symbol": "BTC-USD", "category": "crypto"},
-    "ETH/USD": {"symbol": "ETH-USD", "category": "crypto"},
-    "SOL/USD": {"symbol": "SOL-USD", "category": "crypto"},
-    "EUR/USD": {"symbol": "EURUSD=X", "category": "forex"},
-    "USD/JPY": {"symbol": "USDJPY=X", "category": "forex"},
-    "USD/IDR": {"symbol": "USDIDR=X", "category": "forex"},
-    "S&P 500": {"symbol": "^GSPC", "category": "stock"},
-    "Nasdaq Composite": {"symbol": "^IXIC", "category": "stock"}, 
-    "Nasdaq 100": {"symbol": "NDX", "category": "stock"}, 
-    "Dow Jones": {"symbol": "^DJI", "category": "stock"}, 
-    "Emas (Gold)": {"symbol": "GC=F", "category": "commodity"},
-    "Minyak (WTI)": {"symbol": "CL=F", "category": "commodity"}
+# Multi-asset ticker strip: crypto, forex, komoditas, indeks saham global & saham Indonesia
+CATEGORY_LABELS = {
+    "crypto":    {"ID": "Kripto", "EN": "Crypto"},
+    "forex":     {"ID": "Forex", "EN": "Forex"},
+    "commodity": {"ID": "Komoditas", "EN": "Commodities"},
+    "stock":     {"ID": "Indeks Saham Global", "EN": "Global Equity Indices"},
+    "idx_stock": {"ID": "Saham Indonesia", "EN": "Indonesian Stocks"},
 }
+
+# Urutan tampil 
+CATEGORY_ORDER = ["crypto", "forex", "commodity", "stock", "idx_stock"]
+
+AVAILABLE_ASSETS = {
+    # --- Kripto ---
+    "BTC/USD":  {"symbol": "BTC-USD",  "category": "crypto"},
+    "ETH/USD":  {"symbol": "ETH-USD",  "category": "crypto"},
+    "SOL/USD":  {"symbol": "SOL-USD",  "category": "crypto"},
+    "BNB/USD":  {"symbol": "BNB-USD",  "category": "crypto"},
+    "XRP/USD":  {"symbol": "XRP-USD",  "category": "crypto"},
+    "ADA/USD":  {"symbol": "ADA-USD",  "category": "crypto"},
+    "DOGE/USD": {"symbol": "DOGE-USD", "category": "crypto"},
+    "AVAX/USD": {"symbol": "AVAX-USD", "category": "crypto"},
+
+    # --- Forex ---
+    "EUR/USD": {"symbol": "EURUSD=X", "category": "forex"},
+    "GBP/USD": {"symbol": "GBPUSD=X", "category": "forex"},
+    "USD/JPY": {"symbol": "USDJPY=X", "category": "forex"},
+    "USD/CHF": {"symbol": "USDCHF=X", "category": "forex"},
+    "AUD/USD": {"symbol": "AUDUSD=X", "category": "forex"},
+    "USD/CAD": {"symbol": "USDCAD=X", "category": "forex"},
+    "USD/CNY": {"symbol": "USDCNY=X", "category": "forex"},
+    "USD/IDR": {"symbol": "USDIDR=X", "category": "forex"},
+
+    # --- Komoditas ---
+    "Emas (Gold)":    {"symbol": "GC=F", "category": "commodity"},
+    "Perak (Silver)": {"symbol": "SI=F", "category": "commodity"},
+    "Minyak (WTI)":   {"symbol": "CL=F", "category": "commodity"},
+    "Minyak (Brent)": {"symbol": "BZ=F", "category": "commodity"},
+    "Gas Alam":       {"symbol": "NG=F", "category": "commodity"},
+    "Tembaga":        {"symbol": "HG=F", "category": "commodity"},
+
+    # --- Indeks Saham Global ---
+    "S&P 500":          {"symbol": "^GSPC",  "category": "stock"},
+    "Nasdaq Composite": {"symbol": "^IXIC",  "category": "stock"},
+    "Nasdaq 100":       {"symbol": "NDX",    "category": "stock"},
+    "Dow Jones":        {"symbol": "^DJI",   "category": "stock"},
+    "Russell 2000":     {"symbol": "^RUT",   "category": "stock"},
+    "FTSE 100":         {"symbol": "^FTSE",  "category": "stock"},
+    "Nikkei 225":       {"symbol": "^N225",  "category": "stock"},
+    "DAX":              {"symbol": "^GDAXI", "category": "stock"},
+
+    # --- Saham Indonesia (IDX, top market cap) ---
+    "IHSG (JKSE)":       {"symbol": "^JKSE",   "category": "idx_stock"},
+    "BCA (BBCA)":        {"symbol": "BBCA.JK", "category": "idx_stock"},
+    "Bank Mandiri (BMRI)": {"symbol": "BMRI.JK", "category": "idx_stock"},
+    "BRI (BBRI)":        {"symbol": "BBRI.JK", "category": "idx_stock"},
+    "Telkom (TLKM)":     {"symbol": "TLKM.JK", "category": "idx_stock"},
+    "Astra International (ASII)": {"symbol": "ASII.JK", "category": "idx_stock"},
+    "Bank Negara Indonesia (BBNI)": {"symbol": "BBNI.JK", "category": "idx_stock"},
+    "Unilever Indonesia (UNVR)": {"symbol": "UNVR.JK", "category": "idx_stock"},
+}
+
+
+def get_assets_grouped() -> dict[str, list[str]]:
+    """Kelompokkan label aset per kategori, urutan sesuai CATEGORY_ORDER."""
+    grouped: dict[str, list[str]] = {cat: [] for cat in CATEGORY_ORDER}
+    for label, meta in AVAILABLE_ASSETS.items():
+        grouped.setdefault(meta["category"], []).append(label)
+    return grouped
 
 def format_price(price: float, category: str) -> str:
     """Format a price sensibly per asset class (crypto/stock vs. forex pairs)."""
