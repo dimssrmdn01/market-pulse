@@ -1,12 +1,3 @@
-"""
-data.py
-Handles all data acquisition: FOMC meeting calendar, historical Fed Funds Rate
-(via FRED), and market-implied rate-move probabilities derived from
-30-Day Fed Funds futures (CME ZQ contracts via Yahoo Finance).
-
-No API key is required for FRED's public CSV endpoint or for Yahoo Finance.
-"""
-
 from __future__ import annotations
 
 import datetime as dt
@@ -18,10 +9,6 @@ import yfinance as yf
 import streamlit as st
 
 FRED_SERIES_URL = "https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}"
-
-# Official FOMC meeting calendar. The Fed publishes this a year ahead, so it
-# is safe to hardcode and refresh once a year rather than scrape a page that
-# can change structure without warning.
 FOMC_CALENDAR_2026 = [
     {"start": "2026-01-27", "end": "2026-01-28", "sep": False},
     {"start": "2026-03-17", "end": "2026-03-18", "sep": True},
@@ -33,8 +20,6 @@ FOMC_CALENDAR_2026 = [
     {"start": "2026-12-08", "end": "2026-12-09", "sep": True},
 ]
 
-# Manual fallback used only if the live FRED fetch fails (e.g. no internet
-# in a restricted sandbox). Kept short - just enough for the app to render.
 FALLBACK_RATE_HISTORY = pd.DataFrame(
     {
         "date": pd.to_datetime(
@@ -50,7 +35,7 @@ FALLBACK_RATE_HISTORY = pd.DataFrame(
 
 CURRENT_TARGET_RANGE = (3.50, 3.75)  
 
-# Multi-asset ticker strip: crypto, forex, komoditas, indeks saham global & saham Indonesia
+# Multi asset ticker 
 CATEGORY_LABELS = {
     "crypto":    {"ID": "Kripto", "EN": "Crypto"},
     "forex":     {"ID": "Forex", "EN": "Forex"},
@@ -63,7 +48,7 @@ CATEGORY_LABELS = {
 CATEGORY_ORDER = ["crypto", "forex", "commodity", "stock", "idx_stock"]
 
 AVAILABLE_ASSETS = {
-    # --- Kripto ---
+    #Kripto 
     "BTC/USD":  {"symbol": "BTC-USD",  "category": "crypto"},
     "ETH/USD":  {"symbol": "ETH-USD",  "category": "crypto"},
     "SOL/USD":  {"symbol": "SOL-USD",  "category": "crypto"},
@@ -73,7 +58,7 @@ AVAILABLE_ASSETS = {
     "DOGE/USD": {"symbol": "DOGE-USD", "category": "crypto"},
     "AVAX/USD": {"symbol": "AVAX-USD", "category": "crypto"},
 
-    # --- Forex ---
+    #Forex 
     "EUR/USD": {"symbol": "EURUSD=X", "category": "forex"},
     "GBP/USD": {"symbol": "GBPUSD=X", "category": "forex"},
     "USD/JPY": {"symbol": "USDJPY=X", "category": "forex"},
@@ -83,7 +68,7 @@ AVAILABLE_ASSETS = {
     "USD/CNY": {"symbol": "USDCNY=X", "category": "forex"},
     "USD/IDR": {"symbol": "USDIDR=X", "category": "forex"},
 
-    # --- Komoditas ---
+    #Komoditas 
     "Emas (Gold)":    {"symbol": "GC=F", "category": "commodity"},
     "Perak (Silver)": {"symbol": "SI=F", "category": "commodity"},
     "Minyak (WTI)":   {"symbol": "CL=F", "category": "commodity"},
@@ -91,7 +76,7 @@ AVAILABLE_ASSETS = {
     "Gas Alam":       {"symbol": "NG=F", "category": "commodity"},
     "Tembaga":        {"symbol": "HG=F", "category": "commodity"},
 
-    # --- Indeks Saham Global ---
+    #Indeks Saham Global 
     "S&P 500":          {"symbol": "^GSPC",  "category": "stock"},
     "Nasdaq Composite": {"symbol": "^IXIC",  "category": "stock"},
     "Nasdaq 100":       {"symbol": "NDX",    "category": "stock"},
@@ -101,7 +86,7 @@ AVAILABLE_ASSETS = {
     "Nikkei 225":       {"symbol": "^N225",  "category": "stock"},
     "DAX":              {"symbol": "^GDAXI", "category": "stock"},
 
-    # --- Saham Indonesia (IDX, top market cap) ---
+    #Saham Indonesia 
     "IHSG (JKSE)":       {"symbol": "^JKSE",   "category": "idx_stock"},
     "BCA (BBCA)":        {"symbol": "BBCA.JK", "category": "idx_stock"},
     "Bank Mandiri (BMRI)": {"symbol": "BMRI.JK", "category": "idx_stock"},
@@ -114,14 +99,12 @@ AVAILABLE_ASSETS = {
 
 
 def get_assets_grouped() -> dict[str, list[str]]:
-    """Kelompokkan label aset per kategori, urutan sesuai CATEGORY_ORDER."""
     grouped: dict[str, list[str]] = {cat: [] for cat in CATEGORY_ORDER}
     for label, meta in AVAILABLE_ASSETS.items():
         grouped.setdefault(meta["category"], []).append(label)
     return grouped
 
 def format_price(price: float, category: str) -> str:
-    """Format a price sensibly per asset class (crypto/stock vs. forex pairs)."""
     if category == "forex":
         return f"{price:,.0f}" if price > 100 else f"{price:.4f}"
     if price >= 1000:
@@ -130,17 +113,13 @@ def format_price(price: float, category: str) -> str:
 
 @st.cache_data(ttl=300)
 def fetch_market_snapshot(selected_labels=None) -> list[dict]:
-    """
-    Pull a quick multi-asset snapshot via Yahoo Finance for the hero ticker strip,
-    filtered by user selection.
-    """
+    
     if not selected_labels:
         selected_labels = ["BTC/USD", "Emas (Gold)", "EUR/USD", "S&P 500"]
 
     try:
         import yfinance as yf
 
-        # Filter aset berdasarkan pilihan dropdown
         assets_to_fetch = [
             {"label": label, **AVAILABLE_ASSETS[label]}
             for label in selected_labels if label in AVAILABLE_ASSETS
@@ -198,7 +177,6 @@ CPI_CALENDAR_2026 = [
     {"date": "2026-11-10", "reference_month": "Oktober 2026"},
     {"date": "2026-12-10", "reference_month": "November 2026"},
 ]
-# Source: https://www.bls.gov/schedule/news_release/cpi.htm
 
 NFP_CALENDAR_2026 = [
     {"date": "2026-01-09", "reference_month": "Desember 2025"},
@@ -214,11 +192,9 @@ NFP_CALENDAR_2026 = [
     {"date": "2026-11-06", "reference_month": "Oktober 2026"},
     {"date": "2026-12-04", "reference_month": "November 2026"},
 ]
-# Source: https://www.bls.gov/schedule/news_release/empsit.htm
 
 
 def get_release_schedule(calendar: list[dict], as_of: dt.date | None = None) -> list[ReleaseInfo]:
-    """Generic helper for any BLS-style monthly release calendar (CPI, NFP, etc.)."""
     as_of = as_of or dt.date.today()
     releases = []
     next_found = False
@@ -248,7 +224,6 @@ class MeetingInfo:
 
 
 def get_meeting_schedule(as_of: dt.date | None = None) -> list[MeetingInfo]:
-    """Return the full 2026 FOMC calendar annotated with which meeting is next."""
     as_of = as_of or dt.date.today()
     meetings = []
     next_found = False
@@ -278,11 +253,6 @@ def get_next_meeting(as_of: dt.date | None = None) -> MeetingInfo | None:
 
 @st.cache_data(ttl=3600)
 def fetch_fed_funds_rate_history(lookback_days: int = 730) -> pd.DataFrame:
-    """
-    Pull the effective Federal Funds Rate (FEDFUNDS, daily EFFR series DFF)
-    from FRED's public CSV export. Falls back to a small bundled dataset
-    if the network call fails so the app never shows a blank chart.
-    """
     try:
         url = FRED_SERIES_URL.format(series="DFF")
         resp = requests.get(url, timeout=10)
@@ -301,22 +271,12 @@ def fetch_fed_funds_rate_history(lookback_days: int = 730) -> pd.DataFrame:
 
 
 def get_last_completed_meeting(as_of: dt.date | None = None) -> MeetingInfo | None:
-    """Return the most recent FOMC meeting that has already concluded."""
     as_of = as_of or dt.date.today()
     past = [m for m in get_meeting_schedule(as_of) if m.end <= as_of]
     return past[-1] if past else None
 
 
 def fetch_latest_statement_text() -> dict:
-    """
-    Fetch the FOMC statement for the most recently completed meeting directly
-    from federalreserve.gov, using the site's predictable URL pattern:
-    /newsevents/pressreleases/monetary{YYYYMMDD}a.htm (date = second meeting day).
-
-    Returns a dict with 'text', 'url', and 'meeting_date', or raises ValueError
-    with a friendly message if the fetch or parsing fails (e.g. layout change,
-    no network, or the release simply isn't published yet).
-    """
     from bs4 import BeautifulSoup
 
     meeting = get_last_completed_meeting()
@@ -376,20 +336,6 @@ def fetch_latest_statement_text() -> dict:
 
 
 def estimate_move_probabilities(current_upper: float = CURRENT_TARGET_RANGE[1]) -> dict:
-    """
-    Lightweight, CME-FedWatch-style estimate of the market-implied probability
-    of a hold / 25bp cut / 25bp hike at the next meeting, derived from 30-Day
-    Fed Funds futures (ZQ) pricing via Yahoo Finance.
-
-    Methodology (simplified from the CME FedWatch approach):
-    implied rate = 100 - futures_price
-    The gap between the implied rate and the current effective rate, scaled
-    by the fraction of the month the new rate would be in effect, gives the
-    probability-weighted expected rate change.
-
-    If futures data is unavailable, returns a neutral placeholder so the UI
-    can still render with a clear "data unavailable" note instead of crashing.
-    """
     try:
         import yfinance as yf
 
@@ -402,8 +348,6 @@ def estimate_move_probabilities(current_upper: float = CURRENT_TARGET_RANGE[1]) 
         current_mid = (CURRENT_TARGET_RANGE[0] + CURRENT_TARGET_RANGE[1]) / 2
         delta = implied_rate - current_mid
 
-        # Convert the implied delta into rough hold/cut/hike odds.
-        # This is a simplified heuristic, not the full CME methodology.
         if delta <= -0.10:
             p_cut = min(0.85, 0.5 + abs(delta) * 2)
             p_hold = 1 - p_cut - 0.03
