@@ -1,23 +1,10 @@
-"""
-ai_analysis.py
-Uses Groq (Llama-3.1) for two kinds of scoring:
-
-1. analyze_statement()      - FOMC statement text -> Hawkish <-> Dovish scale
-                               (monetary-policy specific, unchanged behavior)
-2. analyze_news_sentiment() - a batch of general market headlines -> Bearish
-                               <-> Bullish scale (for the broader news feed)
-
-Both return a structured JSON verdict parsed defensively, and raise
-ValueError with a friendly Indonesian message on any failure so the UI
-layer can display it without crashing.
-"""
 from __future__ import annotations
 import json
 import re
 from groq import Groq
 
 # ---------------------------------------------------------------------
-# 1. FOMC statement -> hawkish/dovish (original behavior, untouched)
+# FOMC statement 
 # ---------------------------------------------------------------------
 SYSTEM_PROMPT = """You are a monetary policy analyst. You will be given the text of an \
 FOMC (Federal Open Market Committee) statement or press conference excerpt. \
@@ -46,7 +33,6 @@ def analyze_statement(statement_text: str, api_key: str, model: str = "llama-3.1
         completion = client.chat.completions.create(
             model=model,
             messages=[
-                # Tambahan teks paksaan JSON di belakang system prompt
                 {"role": "system", "content": SYSTEM_PROMPT + "\n\nYou MUST respond entirely in valid JSON format."},
                 {"role": "user", "content": statement_text[:6000]},
             ],
@@ -72,7 +58,7 @@ if risks emerge that could impede the attainment of the Committee's goals."""
 
 
 # ---------------------------------------------------------------------
-# 2. General market news -> bearish/bullish (new)
+# General market news
 # ---------------------------------------------------------------------
 NEWS_SYSTEM_PROMPT = """You are a financial markets analyst. You will be given a batch of \
 recent economic and financial news headlines with short summaries. Assess the OVERALL \
@@ -90,10 +76,7 @@ Return ONLY valid JSON, no markdown fences, no preamble, in exactly this shape:
 def analyze_news_sentiment(
     headlines: list[str], api_key: str, model: str = "llama-3.1-8b-instant"
 ) -> dict:
-    """
-    Send a batch of general market news headlines/summaries to Groq and get
-    back an overall bearish/bullish market-sentiment verdict.
-    """
+    
     if not headlines:
         raise ValueError("Tidak ada berita untuk dianalisis.")
     if not api_key:
@@ -139,7 +122,7 @@ def _parse_score_response(raw: str) -> dict:
     if match:
         raw_json = match.group(0)
     else:
-        raw_json = raw # Fallback kalau regex gak nemu kurung kurawal
+        raw_json = raw 
 
     #
     try:
@@ -171,12 +154,7 @@ def _parse_score_response(raw: str) -> dict:
     return data
 
 def generate_market_recap(snapshot_data: list, headlines: list, api_key: str, lang: str = 'ID', model: str = "llama-3.1-8b-instant") -> str:
-    """
-    Mengirim data harga terkini dan headline berita ke Groq untuk dibuatkan 
-    satu paragraf narasi ringkasan pasar.
-    """
     from groq import Groq
-    
     if not api_key:
         raise ValueError("Groq API key belum diisi.")
         
