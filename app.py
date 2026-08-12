@@ -407,86 +407,142 @@ with tab_central:
 
     st.markdown('<hr class="divider-line">', unsafe_allow_html=True)
 
-    col_cpi, col_nfp = st.columns(2)
+    # =========================================================================
+    # CPI (INFLASI) - HERO & KARTU INDIKATOR
+    # =========================================================================
+    st.markdown("#### Jadwal Rilis CPI (Inflasi) & Indikator Awal" if lang == 'ID' else "#### CPI (Inflation) Release & Leading Indicator")
     
-    with col_cpi:
-        st.markdown("##### Jadwal Rilis CPI (Inflasi)" if lang == 'ID' else "##### CPI (Inflation) Release Schedule")
-        cpi_schedule = data.get_release_schedule(data.CPI_CALENDAR_2026, today)
-        for r in cpi_schedule:
-            if r.days_away < -3:
-                continue
-            css_class = "meeting-row is-next" if r.is_next else "meeting-row"
-            status = ("→ BERIKUTNYA" if lang == 'ID' else "→ NEXT") if r.is_next else (("selesai" if lang == 'ID' else "completed") if r.release_date < today else "")
-            st.html(
-                f"""
-<div class="{css_class}">
-    <div class="meeting-date">{r.release_date.strftime('%d %b %Y')}</div>
-    <div style="font-size:0.75rem; color:{theme['sidebar_label']};">Data {r.reference_month}</div>
-    <div style="margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:0.72rem; color:{theme['accent'] if r.is_next else theme['sidebar_label']};">{status}</div>
-</div>
-"""
-            )
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("###### Indikator Awal: Ekspektasi Inflasi 5-Tahun" if lang == 'ID' else "###### Leading Indicator: 5-Year Inflation Expectation")
-        st.caption("Arah ekspektasi pasar (T5YIE) ini mendahului rilis CPI aktual. Bukan probabilitas pasti." if lang == 'ID' else "Market expectation trend (T5YIE) preceding actual CPI release. Not a probability.")
-        
-        with st.spinner("Memuat data T5YIE..." if lang == 'ID' else "Loading T5YIE data..."):
-            cpi_df = data.fetch_cpi_leading_indicator(180)
-            if not cpi_df.empty:
-                fig_cpi = go.Figure(go.Scatter(
-                    x=cpi_df["date"], y=cpi_df["rate"], mode="lines", 
-                    line=dict(color=theme["info"], width=2), fill="tozeroy", fillcolor=hex_to_rgba(theme["info"], 0.1)
-                ))
-                fig_cpi.update_layout(
-                    plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font=dict(color=theme["text"], family="Inter"),
-                    margin=dict(l=0, r=0, t=10, b=0), height=160, xaxis=dict(showgrid=False, title=None), 
-                    yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.08)")
-                )
-                st.plotly_chart(fig_cpi, use_container_width=True)
-            else:
-                st.info("Data indikator T5YIE sedang tidak tersedia." if lang == 'ID' else "T5YIE indicator data is currently unavailable.")
+    cpi_schedule = data.get_release_schedule(data.CPI_CALENDAR_2026, today)
+    next_cpi = next((r for r in cpi_schedule if r.is_next), None)
+    
+    with st.spinner("Memuat data T5YIE..." if lang == 'ID' else "Loading T5YIE data..."):
+        cpi_df = data.fetch_cpi_leading_indicator(180)
+        latest_t5yie = cpi_df["rate"].iloc[-1] if not cpi_df.empty else 0.0
 
-    #KOLOM KANAN (NFP) 
-    with col_nfp:
-        st.markdown("##### Jadwal Rilis NFP (Employment)" if lang == 'ID' else "##### NFP (Employment) Release Schedule")
-        nfp_schedule = data.get_release_schedule(data.NFP_CALENDAR_2026, today)
-        for r in nfp_schedule:
-            if r.days_away < -3:
-                continue
+    c_col1, c_col2 = st.columns([2, 1])
+    with c_col1:
+        if next_cpi:
+            cpi_date = next_cpi.release_date.strftime('%d %B %Y')
+            cpi_days = f"{next_cpi.days_away} hari lagi" if lang == 'ID' else f"{next_cpi.days_away} days away"
+            cpi_ref = f"referensi bulan {next_cpi.reference_month}" if lang == 'ID' else f"reference month {next_cpi.reference_month}"
+            
+            st.markdown(f"""
+            <div class="ledger-hero" style="padding: 1.5rem; margin-bottom: 0;">
+                <div class="ledger-eyebrow">BUREAU OF LABOR STATISTICS &middot; CPI</div>
+                <p class="ledger-rate" style="font-size: 2.2rem;">{cpi_date}</p>
+                <p class="ledger-sub">Rilis data inflasi {cpi_ref} &middot; {cpi_days}</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+    with c_col2:
+        lbl_ind = "INDIKATOR AWAL &middot; T5YIE" if lang == 'ID' else "LEADING INDICATOR &middot; T5YIE"
+        lbl_desc = "Ekspektasi Inflasi 5-Tahun" if lang == 'ID' else "5-Year Inflation Expectation"
+        
+        st.markdown(f"""
+        <div class="parchment-card" style="height: 100%; display: flex; flex-direction: column; justify-content: center;">
+            <div class="label">{lbl_ind}</div>
+            <div style="color:{theme['info']}; font-size:2.2rem; font-weight:700; margin-top:0.3rem; margin-bottom:0.1rem;">
+                {latest_t5yie:.2f}%
+            </div>
+            <div style="font-size:0.75rem; color:{theme['sidebar_label']};">{lbl_desc}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    if not cpi_df.empty:
+        fig_cpi = go.Figure(go.Scatter(
+            x=cpi_df["date"], y=cpi_df["rate"], mode="lines", 
+            line=dict(color=theme["info"], width=2.5), fill="tozeroy", fillcolor=hex_to_rgba(theme["info"], 0.1)
+        ))
+        fig_cpi.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font=dict(color=theme["text"], family="Inter"),
+            margin=dict(l=0, r=0, t=10, b=0), height=140, xaxis=dict(showgrid=False, title=None), 
+            yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.08)")
+        )
+        st.plotly_chart(fig_cpi, use_container_width=True)
+
+    with st.expander("📅 Lihat Jadwal Lengkap CPI 2026" if lang == 'ID' else "📅 View Full 2026 CPI Schedule"):
+        for r in cpi_schedule:
+            if r.days_away < -3: continue
             css_class = "meeting-row is-next" if r.is_next else "meeting-row"
             status = ("→ BERIKUTNYA" if lang == 'ID' else "→ NEXT") if r.is_next else (("selesai" if lang == 'ID' else "completed") if r.release_date < today else "")
-            st.html(
-                f"""
-<div class="{css_class}">
-    <div class="meeting-date">{r.release_date.strftime('%d %b %Y')}</div>
-    <div style="font-size:0.75rem; color:{theme['sidebar_label']};">Data {r.reference_month}</div>
-    <div style="margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:0.72rem; color:{theme['accent'] if r.is_next else theme['sidebar_label']};">{status}</div>
-</div>
-"""
-            )
-        
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.markdown("###### Indikator Awal: Klaim Pengangguran (ICSA)" if lang == 'ID' else "###### Leading Indicator: Initial Jobless Claims (ICSA)")
-        st.caption("Tren klaim mingguan mendahului rilis NFP bulanan. Berfungsi sebagai korelasi historis." if lang == 'ID' else "Weekly claims trend preceding monthly NFP release. Serves as a historical correlation.")
-        
-        with st.spinner("Memuat data ICSA..." if lang == 'ID' else "Loading ICSA data..."):
-            nfp_df = data.fetch_nfp_leading_indicator(180)
-            if not nfp_df.empty:
-                fig_nfp = go.Figure(go.Scatter(
-                    x=nfp_df["date"], y=nfp_df["claims"], mode="lines", 
-                    line=dict(color=theme["down"], width=2), fill="tozeroy", fillcolor=hex_to_rgba(theme["down"], 0.1)
-                ))
-                fig_nfp.update_layout(
-                    plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font=dict(color=theme["text"], family="Inter"),
-                    margin=dict(l=0, r=0, t=10, b=0), height=160, xaxis=dict(showgrid=False, title=None), 
-                    yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.08)")
-                )
-                st.plotly_chart(fig_nfp, use_container_width=True)
-            else:
-                st.info("Data indikator ICSA sedang tidak tersedia." if lang == 'ID' else "ICSA indicator data is currently unavailable.")
+            st.html(f"""
+            <div class="{css_class}">
+                <div class="meeting-date">{r.release_date.strftime('%d %b %Y')}</div>
+                <div style="font-size:0.75rem; color:{theme['sidebar_label']};">Data {r.reference_month}</div>
+                <div style="margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:0.72rem; color:{theme['accent'] if r.is_next else theme['sidebar_label']};">{status}</div>
+            </div>
+            """)
+
+    st.markdown('<hr class="divider-line">', unsafe_allow_html=True)
+
+    # =========================================================================
+    # NFP (TENAGA KERJA) - HERO & KARTU INDIKATOR
+    # =========================================================================
+    st.markdown("#### Jadwal Rilis NFP (Tenaga Kerja) & Indikator Awal" if lang == 'ID' else "#### NFP (Employment) Release & Leading Indicator")
+    
+    nfp_schedule = data.get_release_schedule(data.NFP_CALENDAR_2026, today)
+    next_nfp = next((r for r in nfp_schedule if r.is_next), None)
+    
+    with st.spinner("Memuat data ICSA..." if lang == 'ID' else "Loading ICSA data..."):
+        nfp_df = data.fetch_nfp_leading_indicator(180)
+        latest_icsa = int(nfp_df["claims"].iloc[-1]) if not nfp_df.empty else 0
+        latest_icsa_str = f"{latest_icsa:,}".replace(",", ".") if lang == 'ID' else f"{latest_icsa:,}"
+
+    n_col1, n_col2 = st.columns([2, 1])
+    with n_col1:
+        if next_nfp:
+            nfp_date = next_nfp.release_date.strftime('%d %B %Y')
+            nfp_days = f"{next_nfp.days_away} hari lagi" if lang == 'ID' else f"{next_nfp.days_away} days away"
+            nfp_ref = f"referensi bulan {next_nfp.reference_month}" if lang == 'ID' else f"reference month {next_nfp.reference_month}"
             
-        st.caption("Sumber: U.S. Bureau of Labor Statistics." if lang == 'ID' else "Source: U.S. Bureau of Labor Statistics.")
+            st.markdown(f"""
+            <div class="ledger-hero" style="padding: 1.5rem; margin-bottom: 0;">
+                <div class="ledger-eyebrow">BUREAU OF LABOR STATISTICS &middot; NFP</div>
+                <p class="ledger-rate" style="font-size: 2.2rem;">{nfp_date}</p>
+                <p class="ledger-sub">Rilis data tenaga kerja {nfp_ref} &middot; {nfp_days}</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+    with n_col2:
+        lbl_ind2 = "INDIKATOR AWAL &middot; ICSA" if lang == 'ID' else "LEADING INDICATOR &middot; ICSA"
+        lbl_desc2 = "Klaim Pengangguran Mingguan" if lang == 'ID' else "Weekly Jobless Claims"
+        
+        st.markdown(f"""
+        <div class="parchment-card" style="height: 100%; display: flex; flex-direction: column; justify-content: center;">
+            <div class="label">{lbl_ind2}</div>
+            <div style="color:{theme['down']}; font-size:2.2rem; font-weight:700; margin-top:0.3rem; margin-bottom:0.1rem;">
+                {latest_icsa_str}
+            </div>
+            <div style="font-size:0.75rem; color:{theme['sidebar_label']};">{lbl_desc2}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    if not nfp_df.empty:
+        fig_nfp = go.Figure(go.Scatter(
+            x=nfp_df["date"], y=nfp_df["claims"], mode="lines", 
+            line=dict(color=theme["down"], width=2.5), fill="tozeroy", fillcolor=hex_to_rgba(theme["down"], 0.1)
+        ))
+        fig_nfp.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font=dict(color=theme["text"], family="Inter"),
+            margin=dict(l=0, r=0, t=10, b=0), height=140, xaxis=dict(showgrid=False, title=None), 
+            yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.08)")
+        )
+        st.plotly_chart(fig_nfp, use_container_width=True)
+
+    with st.expander("📅 Lihat Jadwal Lengkap NFP 2026" if lang == 'ID' else "📅 View Full 2026 NFP Schedule"):
+        for r in nfp_schedule:
+            if r.days_away < -3: continue
+            css_class = "meeting-row is-next" if r.is_next else "meeting-row"
+            status = ("→ BERIKUTNYA" if lang == 'ID' else "→ NEXT") if r.is_next else (("selesai" if lang == 'ID' else "completed") if r.release_date < today else "")
+            st.html(f"""
+            <div class="{css_class}">
+                <div class="meeting-date">{r.release_date.strftime('%d %b %Y')}</div>
+                <div style="font-size:0.75rem; color:{theme['sidebar_label']};">Data {r.reference_month}</div>
+                <div style="margin-left:auto; font-family:'IBM Plex Mono',monospace; font-size:0.72rem; color:{theme['accent'] if r.is_next else theme['sidebar_label']};">{status}</div>
+            </div>
+            """)
+            
+    st.caption("Sumber: U.S. Bureau of Labor Statistics." if lang == 'ID' else "Source: U.S. Bureau of Labor Statistics.")
 
     st.markdown('<hr class="divider-line">', unsafe_allow_html=True)
 
