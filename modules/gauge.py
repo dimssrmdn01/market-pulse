@@ -1,12 +1,3 @@
-"""
-gauge.py
-The signature visual element of the app: a hand-drawn-style semicircular
-sentiment meter that renders a -100..100 score as a needle position.
-
-Colors follow the active theme dict (see styling.get_theme /
-styling.inject_css), so the gauge repaints correctly when the user switches
-themes instead of staying locked to one fixed palette.
-"""
 import math
 
 from .styling import DEFAULT_THEME, get_theme
@@ -19,25 +10,14 @@ def render_hawk_dove_gauge(
     right_label: str = "HAWKISH",
     theme: dict | None = None,
 ) -> str:
-    """
-    score: -100 (left_label extreme) to 100 (right_label extreme)
-    left_label / right_label: text shown at each end of the arc, e.g.
-        "DOVISH"/"HAWKISH" for FOMC statements (default),
-        "BEARISH"/"BULLISH" for general market-news sentiment.
-    theme: color dict from styling.get_theme(name); defaults to the Ledger
-        palette if not provided, so existing call sites keep working.
-    Returns raw SVG markup for a semicircular gauge with a needle.
-    """
     t = theme or get_theme(DEFAULT_THEME)
     score = max(-100, min(100, score))
-    # Map score (-100..100) to angle (180deg..0deg) across a semicircle.
     angle_deg = 180 - ((score + 100) / 200) * 180
     angle_rad = math.radians(angle_deg)
     cx, cy, r = 200, 190, 150
     needle_len = 128
     nx = cx + needle_len * math.cos(angle_rad)
     ny = cy - needle_len * math.sin(angle_rad)
-    # Tick marks every 30 degrees across the arc for a ledger/instrument feel.
     ticks = []
     for i in range(0, 181, 30):
         a = math.radians(i)
