@@ -539,3 +539,47 @@ def fetch_correlation_data(lookback_days=180):
             return pd.DataFrame()
             
     return pd.DataFrame()
+
+@st.cache_data(ttl=3600)
+def fetch_cpi_leading_indicator(lookback_days: int = 180) -> pd.DataFrame:
+    """
+    Menarik data 5-Year Breakeven Inflation Rate (T5YIE) dari FRED.
+    Digunakan sebagai indikator awal ekspektasi inflasi pasar (mendahului CPI).
+    """
+    try:
+        url = FRED_SERIES_URL.format(series="T5YIE")
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        
+        df = pd.read_csv(pd.io.common.StringIO(resp.text))
+        df.columns = ["date", "rate"]
+        df["date"] = pd.to_datetime(df["date"])
+        df["rate"] = pd.to_numeric(df["rate"], errors="coerce")
+        df = df.dropna().sort_values("date")
+        
+        cutoff = pd.Timestamp.today() - pd.Timedelta(days=lookback_days)
+        return df[df["date"] >= cutoff].reset_index(drop=True)
+    except Exception:
+        return pd.DataFrame()
+
+@st.cache_data(ttl=3600)
+def fetch_nfp_leading_indicator(lookback_days: int = 180) -> pd.DataFrame:
+    """
+    Menarik data Initial Jobless Claims (ICSA) mingguan dari FRED.
+    Digunakan sebagai indikator awal pelemahan/penguatan pasar tenaga kerja (mendahului NFP).
+    """
+    try:
+        url = FRED_SERIES_URL.format(series="ICSA")
+        resp = requests.get(url, timeout=10)
+        resp.raise_for_status()
+        
+        df = pd.read_csv(pd.io.common.StringIO(resp.text))
+        df.columns = ["date", "claims"]
+        df["date"] = pd.to_datetime(df["date"])
+        df["claims"] = pd.to_numeric(df["claims"], errors="coerce")
+        df = df.dropna().sort_values("date")
+        
+        cutoff = pd.Timestamp.today() - pd.Timedelta(days=lookback_days)
+        return df[df["date"] >= cutoff].reset_index(drop=True)
+    except Exception:
+        return pd.DataFrame()

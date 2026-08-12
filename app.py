@@ -408,6 +408,7 @@ with tab_central:
     st.markdown('<hr class="divider-line">', unsafe_allow_html=True)
 
     col_cpi, col_nfp = st.columns(2)
+    
     with col_cpi:
         st.markdown("##### Jadwal Rilis CPI (Inflasi)" if lang == 'ID' else "##### CPI (Inflation) Release Schedule")
         cpi_schedule = data.get_release_schedule(data.CPI_CALENDAR_2026, today)
@@ -425,10 +426,30 @@ with tab_central:
 </div>
 """
             )
-        st.caption("Sumber: U.S. Bureau of Labor Statistics." if lang == 'ID' else "Source: U.S. Bureau of Labor Statistics.")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("###### Indikator Awal: Ekspektasi Inflasi 5-Tahun" if lang == 'ID' else "###### Leading Indicator: 5-Year Inflation Expectation")
+        st.caption("Arah ekspektasi pasar (T5YIE) ini mendahului rilis CPI aktual. Bukan probabilitas pasti." if lang == 'ID' else "Market expectation trend (T5YIE) preceding actual CPI release. Not a probability.")
+        
+        with st.spinner("Memuat data T5YIE..." if lang == 'ID' else "Loading T5YIE data..."):
+            cpi_df = data.fetch_cpi_leading_indicator(180)
+            if not cpi_df.empty:
+                fig_cpi = go.Figure(go.Scatter(
+                    x=cpi_df["date"], y=cpi_df["rate"], mode="lines", 
+                    line=dict(color=theme["info"], width=2), fill="tozeroy", fillcolor=hex_to_rgba(theme["info"], 0.1)
+                ))
+                fig_cpi.update_layout(
+                    plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font=dict(color=theme["text"], family="Inter"),
+                    margin=dict(l=0, r=0, t=10, b=0), height=160, xaxis=dict(showgrid=False, title=None), 
+                    yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.08)")
+                )
+                st.plotly_chart(fig_cpi, use_container_width=True)
+            else:
+                st.info("Data indikator T5YIE sedang tidak tersedia." if lang == 'ID' else "T5YIE indicator data is currently unavailable.")
 
+    #KOLOM KANAN (NFP) 
     with col_nfp:
-        st.markdown("##### Jadwal Rilis NFP (Employment Situation)" if lang == 'ID' else "##### NFP (Employment) Release Schedule")
+        st.markdown("##### Jadwal Rilis NFP (Employment)" if lang == 'ID' else "##### NFP (Employment) Release Schedule")
         nfp_schedule = data.get_release_schedule(data.NFP_CALENDAR_2026, today)
         for r in nfp_schedule:
             if r.days_away < -3:
@@ -444,6 +465,27 @@ with tab_central:
 </div>
 """
             )
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.markdown("###### Indikator Awal: Klaim Pengangguran (ICSA)" if lang == 'ID' else "###### Leading Indicator: Initial Jobless Claims (ICSA)")
+        st.caption("Tren klaim mingguan mendahului rilis NFP bulanan. Berfungsi sebagai korelasi historis." if lang == 'ID' else "Weekly claims trend preceding monthly NFP release. Serves as a historical correlation.")
+        
+        with st.spinner("Memuat data ICSA..." if lang == 'ID' else "Loading ICSA data..."):
+            nfp_df = data.fetch_nfp_leading_indicator(180)
+            if not nfp_df.empty:
+                fig_nfp = go.Figure(go.Scatter(
+                    x=nfp_df["date"], y=nfp_df["claims"], mode="lines", 
+                    line=dict(color=theme["down"], width=2), fill="tozeroy", fillcolor=hex_to_rgba(theme["down"], 0.1)
+                ))
+                fig_nfp.update_layout(
+                    plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)", font=dict(color=theme["text"], family="Inter"),
+                    margin=dict(l=0, r=0, t=10, b=0), height=160, xaxis=dict(showgrid=False, title=None), 
+                    yaxis=dict(showgrid=True, gridcolor="rgba(255,255,255,0.08)")
+                )
+                st.plotly_chart(fig_nfp, use_container_width=True)
+            else:
+                st.info("Data indikator ICSA sedang tidak tersedia." if lang == 'ID' else "ICSA indicator data is currently unavailable.")
+            
         st.caption("Sumber: U.S. Bureau of Labor Statistics." if lang == 'ID' else "Source: U.S. Bureau of Labor Statistics.")
 
     st.markdown('<hr class="divider-line">', unsafe_allow_html=True)
@@ -484,7 +526,7 @@ with tab_central:
         st.info("Belum ada rilis untuk ditampilkan." if lang == 'ID' else "No releases to display.")
 
 # =========================================================================
-# TAB 3: ANALISIS KUANTITATIF — Rate history + backtest + correlation
+# TAB 3: ANALISIS KUANTITATIF  Rate history + backtest + correlation
 # =========================================================================
 with tab_quant:
     st.markdown("#### Riwayat Effective Federal Funds Rate" if lang == 'ID' else "#### Effective Federal Funds Rate History")
