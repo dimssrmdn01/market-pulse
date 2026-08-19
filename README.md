@@ -16,7 +16,7 @@
 
 </div>
 
-##  About The Project
+## About The Project
 
 **Market Pulse** is a comprehensive, bilingual (ID/EN) financial dashboard designed to track crypto, forex, and stock markets alongside U.S. Federal Reserve policy.
 
