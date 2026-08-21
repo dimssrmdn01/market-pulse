@@ -151,7 +151,7 @@ def _parse_score_response(raw: str) -> dict:
 
     return data
 
-def generate_market_recap(snapshot_data: list, headlines: list, api_key: str, lang: str = 'ID', model: str = "llama3-8b-8192") -> str:
+def generate_market_recap(snapshot_data: list, headlines: list, api_key: str, lang: str = 'ID', model: str = "llama3-8b-8192") -> str:=
     from groq import Groq
     if not api_key:
         raise ValueError("Groq API key belum diisi.")
