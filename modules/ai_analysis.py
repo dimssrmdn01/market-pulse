@@ -18,8 +18,7 @@ Return ONLY valid JSON, no markdown fences, no preamble, in exactly this shape:
 }
 """
 
-
-def analyze_statement(statement_text: str, api_key: str, model: str = "mixtral-8x7b-32768") -> dict:
+def analyze_statement(statement_text: str, api_key: str, model: str = "openai/gpt-oss-20b") -> dict:
     """
     Send FOMC statement text to Groq for hawkish/dovish scoring.
     """
@@ -73,8 +72,7 @@ Return ONLY valid JSON, no markdown fences, no preamble, in exactly this shape:
 """
 
 
-def analyze_news_sentiment(headlines: list[str], api_key: str, model: str = "mixtral-8x7b-32768") -> dict:
-    
+def analyze_news_sentiment(headlines: list[str], api_key: str, model: str = "openai/gpt-oss-20b") -> dict:    
     if not headlines:
         raise ValueError("Tidak ada berita untuk dianalisis.")
     if not api_key:
@@ -151,7 +149,7 @@ def _parse_score_response(raw: str) -> dict:
 
     return data
 
-def generate_market_recap(snapshot_data: list, headlines: list, api_key: str, lang: str = 'ID', model: str = "mixtral-8x7b-32768") -> str:
+def generate_market_recap(snapshot_data: list, headlines: list, api_key: str, lang: str = 'ID', model: str = "openai/gpt-oss-20b") -> str:    
     from groq import Groq
     if not api_key:
         raise ValueError("Groq API key belum diisi.")
