@@ -49,7 +49,7 @@ Powered by Llama-3.1 via Groq. Paste any FOMC statement or Fed speech excerpt to
 | Market Data | Yahoo Finance (Prices, Futures), FRED (Fed Funds Rate) |
 | News API | Finnhub |
 | Official Sources | federalreserve.gov (Press Releases, RSS), U.S. BLS (CPI/NFP) |
-| AI Engine | Groq API (Llama-3.1-8b-instant) |
+| AI Engine | Groq API (openai/gpt-oss-20b) |
 | Charts | Plotly |
 
 ## Project Structure
