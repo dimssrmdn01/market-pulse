@@ -36,7 +36,7 @@ def analyze_statement(statement_text: str, api_key: str, model: str = "openai/gp
                 {"role": "user", "content": statement_text[:6000]},
             ],
             temperature=0.2,
-            max_tokens=500,
+            max_tokens=1024,
             response_format={"type": "json_object"} # 
         )
         raw = completion.choices[0].message.content.strip()
@@ -89,7 +89,7 @@ def analyze_news_sentiment(headlines: list[str], api_key: str, model: str = "ope
                 {"role": "user", "content": joined[:6000]},
             ],
             temperature=0.2,
-            max_tokens=500,
+            max_tokens=1024,
         )
         raw = completion.choices[0].message.content.strip()
     except Exception as exc:
