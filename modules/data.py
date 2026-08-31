@@ -159,10 +159,6 @@ class ReleaseInfo:
     is_next: bool
     days_away: int
 
-
-# Official 2026 release dates, straight from the U.S. Bureau of Labor
-# Statistics schedule pages (published in advance, safe to hardcode and
-# refresh yearly — same approach as the FOMC calendar above).
 CPI_CALENDAR_2026 = [
     {"date": "2026-01-13", "reference_month": "Desember 2025"},
     {"date": "2026-02-13", "reference_month": "Januari 2026"},
@@ -320,7 +316,6 @@ def fetch_latest_statement_text() -> dict:
         )
 
     raw_segment = full_text[start_idx:end_idx]
-    # Drop the leading marker sentence itself, keep the statement paragraphs.
     lines = [ln.strip() for ln in raw_segment.split("\n") if ln.strip()]
     statement_lines = [ln for ln in lines if not ln.startswith(("approved the following", "For release at"))]
     statement_text = "\n\n".join(statement_lines)
@@ -401,7 +396,7 @@ def run_fomc_backtest():
     for meeting in HISTORICAL_FOMC:
         target_date = dt.datetime.strptime(meeting["date"], "%Y-%m-%d").date()
         
-        # Ambil harga ZQ=F H-1 (satu hari sebelum rapat)
+        #Ambil harga ZQ=F H-1 
         h_minus_1 = target_date - dt.timedelta(days=1)
         start_fetch = h_minus_1 - dt.timedelta(days=4)
         
